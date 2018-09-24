@@ -940,8 +940,7 @@
             "homepage": "https://www.drupal.org/project/title",
             "support": {
                 "source": "http://cgit.drupalcode.org/title"
-            },
-            "time": "2018-08-01T21:06:05+00:00"
+            }
         },
         {
             "name": "drupal/token",
@@ -1065,8 +1064,7 @@
             "homepage": "https://www.drupal.org/project/webforms",
             "support": {
                 "source": "http://cgit.drupalcode.org/webforms"
-            },
-            "time": "2016-04-08T08:53:45+00:00"
+            }
         },
         {
             "name": "easyrdf/easyrdf",
