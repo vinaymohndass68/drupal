@@ -292,6 +292,113 @@
         ]
     },
     {
+        "name": "commerceguys/addressing",
+        "version": "v1.0.1",
+        "version_normalized": "1.0.1.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/commerceguys/addressing.git",
+            "reference": "de46cb4a002f9014c44cfcb1dcf18df8105e8239"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/commerceguys/addressing/zipball/de46cb4a002f9014c44cfcb1dcf18df8105e8239",
+            "reference": "de46cb4a002f9014c44cfcb1dcf18df8105e8239",
+            "shasum": ""
+        },
+        "require": {
+            "doctrine/collections": "~1.0",
+            "php": ">=5.5.0"
+        },
+        "require-dev": {
+            "mikey179/vfsstream": "1.*",
+            "phpunit/phpunit": "~4.0",
+            "squizlabs/php_codesniffer": "2.*",
+            "symfony/validator": ">=3.2"
+        },
+        "suggest": {
+            "symfony/validator": "to validate addresses"
+        },
+        "time": "2018-08-17T14:27:22+00:00",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "1.x-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "CommerceGuys\\Addressing\\": "src"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Bojan Zivanovic"
+            },
+            {
+                "name": "Damien Tournoud"
+            }
+        ],
+        "description": "Addressing library powered by CLDR and Google's address data.",
+        "keywords": [
+            "address",
+            "internationalization",
+            "localization",
+            "postal"
+        ]
+    },
+    {
+        "name": "commerceguys/intl",
+        "version": "v0.7.5",
+        "version_normalized": "0.7.5.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/commerceguys/intl.git",
+            "reference": "de1435502068393fae4061818e194e4ea61b98d6"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/commerceguys/intl/zipball/de1435502068393fae4061818e194e4ea61b98d6",
+            "reference": "de1435502068393fae4061818e194e4ea61b98d6",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.4.0"
+        },
+        "require-dev": {
+            "mikey179/vfsstream": "1.*",
+            "phpunit/phpunit": "~4.0"
+        },
+        "time": "2017-12-29T00:13:05+00:00",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "0.x-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "CommerceGuys\\Intl\\": "src"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Bojan Zivanovic"
+            }
+        ],
+        "description": "Internationalization library powered by CLDR data."
+    },
+    {
         "name": "composer/installers",
         "version": "v1.5.0",
         "version_normalized": "1.5.0.0",
@@ -944,6 +1051,65 @@
         ]
     },
     {
+        "name": "drupal/address",
+        "version": "1.0.0",
+        "version_normalized": "1.0.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://git.drupal.org/project/address",
+            "reference": "8.x-1.0"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/address-8.x-1.0.zip",
+            "reference": "8.x-1.0",
+            "shasum": "2be22f841f8e4af2ba23b6bc9983e013c167c520"
+        },
+        "require": {
+            "commerceguys/addressing": "~1.0",
+            "commerceguys/intl": "~0.7",
+            "drupal/core": "*"
+        },
+        "type": "drupal-module",
+        "extra": {
+            "branch-alias": {
+                "dev-1.x": "1.x-dev"
+            },
+            "drupal": {
+                "version": "8.x-1.0",
+                "datestamp": "1499893143",
+                "security-coverage": {
+                    "status": "covered",
+                    "message": "Covered by Drupal's security advisory policy"
+                }
+            }
+        },
+        "installation-source": "dist",
+        "notification-url": "https://packages.drupal.org/8/downloads",
+        "license": [
+            "GPL-2.0+"
+        ],
+        "authors": [
+            {
+                "name": "bojanz",
+                "homepage": "https://www.drupal.org/user/86106"
+            },
+            {
+                "name": "googletorp",
+                "homepage": "https://www.drupal.org/user/386230"
+            },
+            {
+                "name": "rszrama",
+                "homepage": "https://www.drupal.org/user/49344"
+            }
+        ],
+        "description": "Provides functionality for storing, validating and displaying international postal addresses.",
+        "homepage": "http://drupal.org/project/address",
+        "support": {
+            "source": "http://cgit.drupalcode.org/address"
+        }
+    },
+    {
         "name": "drupal/admin_toolbar",
         "version": "1.24.0",
         "version_normalized": "1.24.0.0",
@@ -1027,6 +1193,55 @@
         }
     },
     {
+        "name": "drupal/checklistapi",
+        "version": "1.8.0",
+        "version_normalized": "1.8.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://git.drupal.org/project/checklistapi",
+            "reference": "8.x-1.8"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/checklistapi-8.x-1.8.zip",
+            "reference": "8.x-1.8",
+            "shasum": "f81a2110d80105ff7da834f8aeedda5cfb6247cb"
+        },
+        "require": {
+            "drupal/core": "~8.0"
+        },
+        "type": "drupal-module",
+        "extra": {
+            "branch-alias": {
+                "dev-1.x": "1.x-dev"
+            },
+            "drupal": {
+                "version": "8.x-1.8",
+                "datestamp": "1532389981",
+                "security-coverage": {
+                    "status": "covered",
+                    "message": "Covered by Drupal's security advisory policy"
+                }
+            }
+        },
+        "installation-source": "dist",
+        "notification-url": "https://packages.drupal.org/8/downloads",
+        "license": [
+            "GPL-2.0-or-later"
+        ],
+        "authors": [
+            {
+                "name": "TravisCarden",
+                "homepage": "https://www.drupal.org/user/236758"
+            }
+        ],
+        "description": "Provides an API for creating fillable, persistent checklists.",
+        "homepage": "https://www.drupal.org/project/checklistapi",
+        "support": {
+            "source": "http://cgit.drupalcode.org/checklistapi"
+        }
+    },
+    {
         "name": "drupal/coder",
         "version": "8.2.12",
         "version_normalized": "8.2.12.0",
@@ -1064,6 +1279,71 @@
             "phpcs",
             "standards"
         ]
+    },
+    {
+        "name": "drupal/commerce_purchase_order",
+        "version": "1.1.0",
+        "version_normalized": "1.1.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://git.drupal.org/project/commerce_purchase_order",
+            "reference": "8.x-1.1"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/commerce_purchase_order-8.x-1.1.zip",
+            "reference": "8.x-1.1",
+            "shasum": "2a52910107f1258e108966ac9391c043fcc876af"
+        },
+        "require": {
+            "drupal/core": "*"
+        },
+        "type": "drupal-module",
+        "extra": {
+            "branch-alias": {
+                "dev-1.x": "1.x-dev"
+            },
+            "drupal": {
+                "version": "8.x-1.1",
+                "datestamp": "1510152484",
+                "security-coverage": {
+                    "status": "covered",
+                    "message": "Covered by Drupal's security advisory policy"
+                }
+            }
+        },
+        "installation-source": "dist",
+        "notification-url": "https://packages.drupal.org/8/downloads",
+        "license": [
+            "GPL-2.0+"
+        ],
+        "authors": [
+            {
+                "name": "FatherShawn",
+                "homepage": "https://www.drupal.org/user/628748"
+            },
+            {
+                "name": "Jody Lynn",
+                "homepage": "https://www.drupal.org/user/112500"
+            },
+            {
+                "name": "bbujisic",
+                "homepage": "https://www.drupal.org/user/52799"
+            },
+            {
+                "name": "guillaumev",
+                "homepage": "https://www.drupal.org/user/849890"
+            }
+        ],
+        "description": "Adds purchase order payment method",
+        "homepage": "https://www.drupal.org/project/commerce_purchase_order",
+        "keywords": [
+            "Drupal"
+        ],
+        "support": {
+            "source": "http://cgit.drupalcode.org/commerce_purchase_order",
+            "issues": "https://www.drupal.org/project/issues/commerce_purchase_order"
+        }
     },
     {
         "name": "drupal/ctools",
@@ -1245,6 +1525,55 @@
         }
     },
     {
+        "name": "drupal/imce",
+        "version": "1.6.0",
+        "version_normalized": "1.6.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://git.drupal.org/project/imce",
+            "reference": "8.x-1.6"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/imce-8.x-1.6.zip",
+            "reference": "8.x-1.6",
+            "shasum": "973fc92959dc31b16e33114852b8c26ec050ba7c"
+        },
+        "require": {
+            "drupal/core": "~8.0"
+        },
+        "type": "drupal-module",
+        "extra": {
+            "branch-alias": {
+                "dev-1.x": "1.x-dev"
+            },
+            "drupal": {
+                "version": "8.x-1.6",
+                "datestamp": "1499898842",
+                "security-coverage": {
+                    "status": "covered",
+                    "message": "Covered by Drupal's security advisory policy"
+                }
+            }
+        },
+        "installation-source": "dist",
+        "notification-url": "https://packages.drupal.org/8/downloads",
+        "license": [
+            "GPL-2.0+"
+        ],
+        "authors": [
+            {
+                "name": "ufku",
+                "homepage": "https://www.drupal.org/user/9910"
+            }
+        ],
+        "description": "Provides a file manager supporting personal folders.",
+        "homepage": "https://drupal.org/project/imce",
+        "support": {
+            "source": "http://cgit.drupalcode.org/imce"
+        }
+    },
+    {
         "name": "drupal/panels",
         "version": "4.3.0",
         "version_normalized": "4.3.0.0",
@@ -1392,6 +1721,60 @@
         "homepage": "https://www.drupal.org/project/pathauto",
         "support": {
             "source": "http://cgit.drupalcode.org/pathauto"
+        }
+    },
+    {
+        "name": "drupal/production_checklist",
+        "version": "1.0.0-alpha2",
+        "version_normalized": "1.0.0.0-alpha2",
+        "source": {
+            "type": "git",
+            "url": "https://git.drupal.org/project/production_checklist",
+            "reference": "8.x-1.0-alpha2"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/production_checklist-8.x-1.0-alpha2.zip",
+            "reference": "8.x-1.0-alpha2",
+            "shasum": "9a923f84de73d2fe15e0e7a6fbc8e2aea8493fcb"
+        },
+        "require": {
+            "drupal/checklistapi": "~1.7",
+            "drupal/core": "*"
+        },
+        "type": "drupal-module",
+        "extra": {
+            "branch-alias": {
+                "dev-1.x": "1.x-dev"
+            },
+            "drupal": {
+                "version": "8.x-1.0-alpha2",
+                "datestamp": "1525969980",
+                "security-coverage": {
+                    "status": "not-covered",
+                    "message": "Project has not opted into security advisory coverage!"
+                }
+            }
+        },
+        "installation-source": "dist",
+        "notification-url": "https://packages.drupal.org/8/downloads",
+        "license": [
+            "GPL-2.0+"
+        ],
+        "authors": [
+            {
+                "name": "colorfield",
+                "homepage": "https://www.drupal.org/user/2295486"
+            }
+        ],
+        "description": "A checklist for site launch and maintenance based on the active configuration.",
+        "homepage": "https://www.drupal.org/project/production_checklist",
+        "keywords": [
+            "Drupal"
+        ],
+        "support": {
+            "source": "http://cgit.drupalcode.org/production_checklist",
+            "issues": "https://www.drupal.org/project/issues/production_checklist"
         }
     },
     {
