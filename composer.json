@@ -13,10 +13,13 @@
         "drupal/webform": "^5.0@RC",
         "drupal/devel": "^1.2",
         "drupal/admin_toolbar": "1.24",
-        "drupal/address": "1.0",
+        "drupal/address": "^1.4",
         "drupal/imce": "1.6",
         "drupal/production_checklist": "^1.0@alpha",
-        "drupal/commerce_purchase_order": "1.1"
+        "drupal/commerce_purchase_order": "^1.1",
+        "drupal/financial": "1.0",
+        "drupal/basic": "^2.0",
+        "drupal/tally": "1.x-dev"
     },
     "replace": {
         "drupal/core": "^8.6"

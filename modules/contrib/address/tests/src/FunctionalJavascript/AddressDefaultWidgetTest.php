@@ -213,7 +213,7 @@ class AddressDefaultWidgetTest extends JavascriptTestBase {
     $this->assertNotEmpty($node, 'Created article ' . $edit['title[0][value]']);
 
     // Now remove 'US' from the list of available countries.
-    $countries = ['FR', 'BR', 'JP'];
+    $countries = ['FR'];
     $edit = [];
     $edit['settings[available_countries][]'] = array_map(function ($country) {
       return $country;
@@ -232,6 +232,13 @@ class AddressDefaultWidgetTest extends JavascriptTestBase {
     $this->assertOptionSelected($field_name . '[0][address][administrative_area]', $address['administrative_area']);
     $this->assertSession()->fieldValueEquals($field_name . '[0][address][postal_code]', $address['postal_code']);
     $this->assertOptionSelected($field_name . '[0][address][country_code]', $country_code);
+    // Confirm that it is possible to switch the country to France, and back.
+    $this->getSession()->getPage()->fillField($field_name . '[0][address][country_code]', 'FR');
+    $this->waitForAjaxToFinish();
+    $this->assertSession()->fieldNotExists($field_name . '[0][address][administrative_area]');
+    $this->getSession()->getPage()->fillField($field_name . '[0][address][country_code]', 'US');
+    $this->waitForAjaxToFinish();
+    $this->assertSession()->fieldExists($field_name . '[0][address][administrative_area]');
 
     // Test the widget with only one available country.
     // Since the field is required, the country selector should be hidden.
@@ -301,7 +308,7 @@ class AddressDefaultWidgetTest extends JavascriptTestBase {
   }
 
   /**
-   * Tests expected and disabled fields.
+   * Tests expected and overridden fields.
    */
   public function testFields() {
     $field_name = $this->field->getName();
@@ -343,21 +350,24 @@ class AddressDefaultWidgetTest extends JavascriptTestBase {
       $this->assertFieldValues($used_fields, $form_fields, 'Expected fields ' . implode(', ', $used_fields) . ' exists for country ' . $country . ", only found " . implode(', ', $form_fields));
     }
 
-    // Disable the name and postal code fields.
-    $disabled_fields = ['givenName', 'familyName', 'postalCode'];
-    $edit = [];
-    foreach (array_keys($all_fields) as $field) {
-      $edit['settings[fields][' . $field . ']'] = !in_array($field, $disabled_fields);
-    }
+    // Test field overrides.
+    $edit = [
+      'settings[field_overrides][givenName][override]' => 'optional',
+      'settings[field_overrides][familyName][override]' => 'optional',
+      'settings[field_overrides][organization][override]' => 'required',
+      'settings[field_overrides][postalCode][override]' => 'hidden',
+    ];
     $this->drupalGet($this->fieldConfigUrl);
     $this->submitForm($edit, t('Save settings'));
     $this->assertSession()->statusCodeEquals(200);
 
-    // Confirm the absence of disabled fields.
     $this->drupalGet($this->nodeAddUrl);
-    $this->assertEmpty((bool) $this->xpath('//input[@name="' . implode('" or @name="', $disabled_fields) . '"]'), 'Disabled fields ' . implode(', ', $disabled_fields) . ' are absent.');
+    $this->assertEmpty((bool) $this->xpath('//input[@name="field_address[0][address][given_name]" and contains(@required, "required")]'));
+    $this->assertEmpty((bool) $this->xpath('//input[@name="field_address[0][address][family_name]" and contains(@required, "required")]'));
+    $this->assertNotEmpty((bool) $this->xpath('//input[@name="field_address[0][address][organization]" and contains(@required, "required")]'));
+    $this->assertEmpty((bool) $this->xpath('//input[@name="field_address[0][address][postal_code]"]'));
 
-    // Confirm that creating an address without the disabled fields works.
+    // Test creating an address without the optional and hidden fields.
     $edit = [];
     $edit['title[0][value]'] = $this->randomMachineName(8);
 
@@ -494,9 +504,9 @@ class AddressDefaultWidgetTest extends JavascriptTestBase {
    *   will be displayed.
    */
   protected function assertOptionSelected($id, $option, $message = '') {
-    $elements = $this->xpath('//select[@name=:id]//option[@value=:option]', array(':id' => $id, ':option' => $option));
+    $elements = $this->xpath('//select[@name=:id]//option[@value=:option]', [':id' => $id, ':option' => $option]);
     foreach ($elements as $element) {
-      $this->assertNotEmpty($element->isSelected(), $message ? $message : new FormattableMarkup('Option @option for field @id is selected.', array('@option' => $option, '@id' => $id)));
+      $this->assertNotEmpty($element->isSelected(), $message ? $message : new FormattableMarkup('Option @option for field @id is selected.', ['@option' => $option, '@id' => $id]));
     }
   }
 

@@ -5,7 +5,9 @@ namespace Drupal\address\Element;
 use CommerceGuys\Addressing\AddressFormat\AddressField;
 use CommerceGuys\Addressing\AddressFormat\AddressFormat;
 use CommerceGuys\Addressing\AddressFormat\AddressFormatHelper;
-use CommerceGuys\Addressing\LocaleHelper;
+use CommerceGuys\Addressing\AddressFormat\FieldOverride;
+use CommerceGuys\Addressing\AddressFormat\FieldOverrides;
+use CommerceGuys\Addressing\Locale;
 use Drupal\address\FieldHelper;
 use Drupal\address\LabelHelper;
 use Drupal\Component\Utility\Html;
@@ -17,6 +19,9 @@ use Drupal\Core\Render\Element\FormElement;
 
 /**
  * Provides an address form element.
+ *
+ * Use #field_overrides to override the country-specific address format,
+ * forcing specific fields to be hidden, optional, or required.
  *
  * Usage example:
  * @code
@@ -32,6 +37,11 @@ use Drupal\Core\Render\Element\FormElement;
  *     'administrative_area' => 'CA',
  *     'country_code' => 'US',
  *     'langcode' => 'en',
+ *   ],
+ *   '@field_overrides' => [
+ *     AddressField::ORGANIZATION => FieldOverride::REQUIRED,
+ *     AddressField::ADDRESS_LINE2 => FieldOverride::HIDDEN,
+ *     AddressField::POSTAL_CODE => FieldOverride::OPTIONAL,
  *   ],
  *   '#available_countries' => ['DE', 'FR'],
  * ];
@@ -49,7 +59,9 @@ class Address extends FormElement {
     return [
       // List of country codes. If empty, all countries will be available.
       '#available_countries' => [],
-      // List of AddressField constants. If empty, all fields will be used.
+      // FieldOverride constants keyed by AddressField constants.
+      '#field_overrides' => [],
+      // Deprecated. Use #field_overrides instead.
       '#used_fields' => [],
 
       '#input' => TRUE,
@@ -74,19 +86,15 @@ class Address extends FormElement {
   }
 
   /**
-   * {@inheritdoc}
+   * Ensures all keys are set on the provided value.
+   *
+   * @param array $value
+   *   The value.
+   *
+   * @return array
+   *   The modified value.
    */
-  public static function valueCallback(&$element, $input, FormStateInterface $form_state) {
-    if (is_array($input)) {
-      $value = $input;
-    }
-    else {
-      if (!is_array($element['#default_value'])) {
-        $element['#default_value'] = [];
-      }
-      $value = $element['#default_value'];
-    }
-    // Initialize default keys.
+  public static function applyDefaults(array $value) {
     $properties = [
       'given_name', 'additional_name', 'family_name', 'organization',
       'address_line1', 'address_line2', 'postal_code', 'sorting_code',
@@ -100,6 +108,27 @@ class Address extends FormElement {
     }
 
     return $value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function valueCallback(&$element, $input, FormStateInterface $form_state) {
+    // Ensure both the default value and the input have all keys set.
+    // Preselect the default country to ensure it's present in the value.
+    $element['#default_value'] = (array) $element['#default_value'];
+    $element['#default_value'] = self::applyDefaults($element['#default_value']);
+    if (empty($element['#default_value']['country_code']) && $element['#required']) {
+      $element['#default_value']['country_code'] = Country::getDefaultCountry($element['#available_countries']);
+    }
+    if (is_array($input)) {
+      $input = self::applyDefaults($input);
+      if (empty($input['country_code']) && $element['#required']) {
+        $input['country_code'] = $element['#default_value']['country_code'];
+      }
+    }
+
+    return is_array($input) ? $input : $element['#default_value'];
   }
 
   /**
@@ -119,16 +148,25 @@ class Address extends FormElement {
    *   Thrown when #used_fields is malformed.
    */
   public static function processAddress(array &$element, FormStateInterface $form_state, array &$complete_form) {
-    if (isset($element['#used_fields']) && !is_array($element['#used_fields'])) {
-      throw new \InvalidArgumentException('The #used_fields property must be an array.');
+    // Convert #used_fields into #field_overrides.
+    if (!empty($element['#used_fields']) && is_array($element['#used_fields'])) {
+      $unused_fields = array_diff(AddressField::getAll(), $element['#used_fields']);
+      $element['#field_overrides'] = [];
+      foreach ($unused_fields as $field) {
+        $element['#field_overrides'][$field] = FieldOverride::HIDDEN;
+      }
+      unset($element['#used_fields']);
     }
+    // Validate and parse #field_overrides.
+    if (!is_array($element['#field_overrides'])) {
+      throw new \InvalidArgumentException('The #field_overrides property must be an array.');
+    }
+    $element['#parsed_field_overrides'] = new FieldOverrides($element['#field_overrides']);
+
     $id_prefix = implode('-', $element['#parents']);
     $wrapper_id = Html::getUniqueId($id_prefix . '-ajax-wrapper');
+    // The #value has the new values on #ajax, the #default_value otherwise.
     $value = $element['#value'];
-    if (empty($value['country_code']) && $element['#required']) {
-      // Preselect the default country so that the other elements can be shown.
-      $value['country_code'] = Country::getDefaultCountry($element['#available_countries']);
-    }
 
     $element = [
       '#tree' => TRUE,
@@ -139,13 +177,13 @@ class Address extends FormElement {
     ] + $element;
     $element['langcode'] = [
       '#type' => 'hidden',
-      '#value' => $value['langcode'],
+      '#value' => $element['#default_value']['langcode'],
     ];
     $element['country_code'] = [
       '#type' => 'address_country',
       '#title' => t('Country'),
       '#available_countries' => $element['#available_countries'],
-      '#default_value' => $value['country_code'],
+      '#default_value' => $element['#default_value']['country_code'],
       '#required' => $element['#required'],
       '#limit_validation_errors' => [],
       '#ajax' => [
@@ -183,18 +221,19 @@ class Address extends FormElement {
       AddressField::ADDITIONAL_NAME => 25,
       AddressField::FAMILY_NAME => 25,
     ];
+    $field_overrides = $element['#parsed_field_overrides'];
     /** @var \CommerceGuys\Addressing\AddressFormat\AddressFormat $address_format */
     $address_format = \Drupal::service('address.address_format_repository')->get($value['country_code']);
-    $required_fields = $address_format->getRequiredFields();
+    $required_fields = AddressFormatHelper::getRequiredFields($address_format, $field_overrides);
     $labels = LabelHelper::getFieldLabels($address_format);
     $locale = \Drupal::languageManager()->getConfigOverrideLanguage()->getId();
-    if (LocaleHelper::match($address_format->getLocale(), $locale)) {
+    if (Locale::matchCandidates($address_format->getLocale(), $locale)) {
       $format_string = $address_format->getLocalFormat();
     }
     else {
       $format_string = $address_format->getFormat();
     }
-    $grouped_fields = AddressFormatHelper::getGroupedFields($format_string);
+    $grouped_fields = AddressFormatHelper::getGroupedFields($format_string, $field_overrides);
     foreach ($grouped_fields as $line_index => $line_fields) {
       if (count($line_fields) > 1) {
         // Used by the #pre_render callback to group fields inline.
@@ -229,15 +268,6 @@ class Address extends FormElement {
     // Hide the label for the second address line.
     if (isset($element['address_line2'])) {
       $element['address_line2']['#title_display'] = 'invisible';
-    }
-    // Hide unused fields.
-    if (!empty($element['#used_fields'])) {
-      $used_fields = $element['#used_fields'];
-      $unused_fields = array_diff(AddressField::getAll(), $used_fields);
-      foreach ($unused_fields as $field) {
-        $property = FieldHelper::getPropertyName($field);
-        $element[$property]['#access'] = FALSE;
-      }
     }
     // Add predefined options to the created subdivision elements.
     $element = static::processSubdivisionElements($element, $value, $address_format);
@@ -334,14 +364,21 @@ class Address extends FormElement {
    * Ajax callback.
    */
   public static function ajaxRefresh(array $form, FormStateInterface $form_state) {
-    $country_element = $form_state->getTriggeringElement();
-    $address_element = NestedArray::getValue($form, array_slice($country_element['#array_parents'], 0, -2));
+    $triggering_element = $form_state->getTriggeringElement();
+    $parents = $triggering_element['#array_parents'];
+    $triggering_element_name = array_pop($parents);
+    // The country_code element is nested one level deeper than
+    // the subdivision elements.
+    if ($triggering_element_name == 'country_code') {
+      array_pop($parents);
+    };
+    $address_element = NestedArray::getValue($form, $parents);
 
     return $address_element;
   }
 
   /**
-   * Clears the country-specific form values when the country changes.
+   * Clears dependent form values when the country or subdivision changes.
    *
    * Implemented as an #after_build callback because #after_build runs before
    * validation, allowing the values to be cleared early enough to prevent the
@@ -353,14 +390,22 @@ class Address extends FormElement {
       return $element;
     }
 
-    $triggering_element_name = end($triggering_element['#parents']);
-    if ($triggering_element_name == 'country_code') {
-      $keys = [
+    $keys = [
+      'country_code' => [
         'dependent_locality', 'locality', 'administrative_area',
         'postal_code', 'sorting_code',
-      ];
+      ],
+      'administrative_area' => [
+        'dependent_locality', 'locality',
+      ],
+      'locality' => [
+        'dependent_locality',
+      ],
+    ];
+    $triggering_element_name = end($triggering_element['#parents']);
+    if (isset($keys[$triggering_element_name])) {
       $input = &$form_state->getUserInput();
-      foreach ($keys as $key) {
+      foreach ($keys[$triggering_element_name] as $key) {
         $parents = array_merge($element['#parents'], [$key]);
         NestedArray::setValue($input, $parents, '');
         $element[$key]['#value'] = '';
