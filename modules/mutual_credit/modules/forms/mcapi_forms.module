@@ -1,0 +1,277 @@
+<?php
+
+use Drupal\mcapi\Entity\WalletInterface;
+use Drupal\migrate\MigrateSkipRowException;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_entity_type_build().
+ */
+function mcapi_forms_entity_type_build(array &$entity_types) {
+  if (isset($entity_types['mcapi_transaction'])) {
+    foreach (array_keys(mcapi_form_displays_load(TRUE)) as $mode) {
+      $entity_types['mcapi_transaction']->setFormClass(
+        $mode,
+        'Drupal\mcapi_forms\FirstPartyTransactionForm'
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_menu_links_discovered_alter().
+ *
+ * Adds menu links where the firstparty forms specify theme.
+ *
+ * @param array $links
+ *   Each link is a definition array.
+ */
+function mcapi_forms_menu_links_discovered_alter(&$links) {
+  foreach (mcapi_form_displays_load() as $id => $first_party_form) {
+    $settings = $first_party_form->getThirdPartySettings('mcapi_forms');
+    if ($menu = @$settings['menu_parent']) {
+      list($menu_name, $parent_link) = explode(':', $menu);
+      $route_name = 'mcapi.1stparty.'.$first_party_form->get('mode');
+      $links[$route_name.'.link'] = [
+        'title' => $settings['title'],
+        'route_name' => $route_name,
+        'provider' => 'mcapi_forms',
+        'menu_name' => $menu_name,
+        'parent' => $parent_link,
+        'weight' => $settings['menu_weight']
+      ];
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_base_field_info_alter().
+ *
+ * Change the default date widget for the created field
+ *
+ * @todo make this work with the date_popup widget, but in what module?
+ */
+function mcapi_forms_entity_base_field_info_alter(&$fields, EntityTypeInterface $entity_type) {
+  if ($entity_type->id() == 'mcapi_transaction') {
+    $fields['created']->setDisplayOptions(
+      'form',
+      [
+        'type' => \Drupal::moduleHandler()->moduleExists('datetime') ? 'datetime_timestamp' : 'datetime_timestamp',
+        'weight' => 10
+      ]
+    );
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function mcapi_forms_theme() {
+  return [
+    'first_party_transaction_form' => [
+      'function' => 'theme_first_party_transaction_form',//no template is possible in this case
+      'render element' => 'form',
+      'file' => 'mcapi_forms.inc',
+    ]
+  ];
+}
+
+/**
+ * Implements mcapi hook_mcapi_form_list().
+ *
+ * Return a list of transaction forms declared in this module. Each item must be
+ * an array with the following keys:
+ * - 'link' => \Drupal\Core\Link::()
+ * - 'operations' => [Url::fromPath('blah')] an array of items, each with title
+ * and path
+ */
+function mcapi_forms_mcapi_form_list() {
+  drupal_set_message(t('Create more forms by creating more transaction form displays and customising them'));
+  $forms = [];
+  foreach (mcapi_form_displays_load() as $mode => $entity) {
+    $title = $entity->getThirdpartySetting('mcapi_forms', 'title');
+    $forms[$mode] = [
+      'link' => Link::fromTextAndUrl(
+        $title,
+        Url::fromRoute('mcapi.1stparty.'.$mode)
+      ),
+      'operations' => []
+    ];
+    if (\Drupal::moduleHandler()->moduleExists('field_ui')) {
+      $forms[$mode]['operations']['edit'] = [
+        'title' => t('Edit'),
+        'url' => Url::fromRoute(
+          'entity.entity_form_display.mcapi_transaction.form_mode',
+          ['form_mode_name' => $mode]
+        )
+      ];
+    }
+    else {
+      drupal_set_message(t('Enable Field UI module to edit %name form', ['%name' => $title]));
+    }
+  }
+  return $forms;
+}
+
+/**
+ * Get the EntityFormDisplays which have the thirdPartySettings.
+ *
+ * @param bool $config
+ *   TRUE if there is a risk of recursion loading entities, and then will be
+ * loaded as config.
+ *
+ * @return EntityFormDisplay[]
+ *   The display entities, as entities or as config.
+ */
+function mcapi_form_displays_load($config = FALSE) {
+  $displays = [];
+  if ($config) {
+    $transaction_form_display_ids = \Drupal::configFactory()
+      ->listAll('core.entity_form_display.mcapi_transaction.mcapi_transaction');
+    foreach ($transaction_form_display_ids as $id) {
+      $display = \Drupal::config($id);
+      if ($display->get('third_party_settings.mcapi_forms')['title']) {
+        $displays[$display->get('mode')] = $display;
+      }
+    }
+  }
+  else {
+    $entities = \Drupal::entityTypeManager()
+      ->getStorage('entity_form_display')
+      ->loadByProperties(['bundle' => 'mcapi_transaction']);
+    foreach ($entities as $display) {
+      if ($display->getThirdPartySettings('mcapi_forms')) {
+        $displays[$display->get('mode')] = $display;
+      }
+    }
+  }
+  return $displays;
+}
+
+/**
+ * Implements hook_entity_extra_field_info().
+ */
+function mcapi_forms_entity_extra_field_info() {
+  return [
+    'mcapi_wallet' => [
+      'mcapi_wallet' => [
+        'display' => [
+          'trade_with' => [
+            'label' => t('Link(s) to trade'),
+            'description' => t("Link or links to forms to trade with this wallet."),
+            'weight' => 7
+          ]
+        ]
+      ]
+    ]
+  ];
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_view().
+ */
+function mcapi_forms_mcapi_wallet_view(array &$build, $entity, $display) {
+  if ($display->getComponent('trade_with')) {
+    if ($entity->holder_entity_type->value == 'user' and $entity->holder_entity_id->value == \Drupal::currentUser()->id() ) {
+      return;
+    }
+    foreach (_mcapi_forms_quick_links($entity) as $data) {
+      $build['wallet_link_'.$display->id()] = [
+        '#type' => 'link',
+        '#title' => $data['title'],
+        '#url' => $data['url'],
+        '#attributes' => ['class' => 'wallet-link'],
+      ];
+    }
+  }
+}
+
+/**
+ * Create links to the payment forms, prepopulated if possible.
+ *
+ * Iterate through the transaction form displays and create links to ones using
+ * the 'my_wallet' widget.
+ *
+ * @param WalletInterface $wallet
+ *
+ * @return array[]
+ *   Items each containing a Url and string value
+ *
+ * @todo move this to a static class or at least to the inc file
+ */
+function _mcapi_forms_quick_links(WalletInterface $wallet = NULL) {
+  $info = [];
+  foreach (mcapi_form_displays_load() as $display) {
+    if ($display->getComponent('payer')['type'] == 'my_wallet') {
+      $key = 'payer';
+    }
+    elseif ($display->getComponent('payee')['type'] == 'my_wallet') {
+      $key = 'payee';
+    }
+    else {
+      continue;
+    }
+
+    if ($wallet) {
+      $options['query'] = [$key => $wallet->id()];
+      $title = str_replace('[mcapi_wallet:name]', $wallet->label(), $display->getThirdPartySetting('mcapi_forms', 'wallet_link_title'));
+    }
+    else {
+      $options = [];
+      $title = $display->getThirdPartySetting('mcapi_forms', 'title');
+    }
+    $info[$display->id()] = [
+      'url' => Url::fromUserInput($display->getThirdPartySetting('mcapi_forms', 'path'), $options),
+      'title' => $title
+    ];
+  }
+  return $info;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function mcapi_forms_form_entity_form_display_edit_form_alter(&$form, $form_state) {
+  if ($form['#entity_type'] == 'mcapi_transaction') {
+    $entity_form_display = $form_state->getFormObject()->getEntity();
+    if ($entity_form_display->getMode() == 'default') {
+      return;
+    }
+    $form_state->loadInclude('mcapi_forms', 'inc');
+    mcapi_forms_display_decorate($form, $form_state, $entity_form_display->getThirdpartySettings('mcapi_forms'));
+  }
+}
+
+/**
+ * Replace the wallet name in the given template format.
+ *
+ * @param WalletInterface $wallet
+ * @param string $template
+ *
+ * @return string
+ */
+function wallet_link_title(WalletInterface $wallet, $template) {
+  return str_replace('[mcapi_wallet:name]', $wallet->label(), $template);
+}
+
+/**
+ * Implements hook_migrate_MIGRATE_ID_prepare_row().
+ */
+function mcapi_forms_migrate_d7_filter_format_prepare_row($row, $source, $migration) {
+  return $row->getSourceProperty('format') != 'mcapiform_string_format';
+}
+
+/**
+ * Implements hook_migrate_MIGRATE_ID_prepare_row().
+ */
+function mcapi_forms_migrate_d7_mcapi_form_prepare_row($row, $source, $migration) {
+  $template = $row->getSourceProperty('experience')->template;
+  if ($row->getSourceProperty('perspective') == 3) {
+    throw new MigrateSkipRowException('Not migrating 3rdparty transaction forms.');
+  }
+  elseif (strpos($template, '[mcapiform:direction]')) {
+    throw new MigrateSkipRowException('Not migrating 1stparty transaction forms showing the direction widget');
+  }
+}

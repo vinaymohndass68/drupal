@@ -1,0 +1,16 @@
+name: Transaction form designer
+description: Design payment forms for any occaision!
+package: Community Accounting
+# core: 8.x
+type: module
+
+configure: mcapi.admin.transaction_form.list
+
+dependencies:
+  - mcapi
+
+# Information added by Drupal.org packaging script on 2017-11-11
+version: '8.x-4.0-beta15'
+core: '8.x'
+project: 'mutual_credit'
+datestamp: 1510434803

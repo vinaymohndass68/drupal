@@ -1,0 +1,17 @@
+name: Transaction signing
+description: Certain transaction types may require signatures before being counted
+package: Community Accounting
+configure: mcapi.admin.signatures
+# core: 8.x
+type: module
+
+dependencies:
+  - mcapi
+  #workaround requires views otherwise the optional config doesn't install when this is part of an installation profile
+  - views
+
+# Information added by Drupal.org packaging script on 2017-11-11
+version: '8.x-4.0-beta15'
+core: '8.x'
+project: 'mutual_credit'
+datestamp: 1510434803

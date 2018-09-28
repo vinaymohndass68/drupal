@@ -19,7 +19,9 @@
         "drupal/commerce_purchase_order": "^1.1",
         "drupal/financial": "1.0",
         "drupal/basic": "^2.0",
-        "drupal/tally": "1.x-dev"
+        "drupal/tally": "1.x-dev",
+        "drupal/group": "^1.0@RC",
+        "drupal/mongodb": "^2.0"
     },
     "replace": {
         "drupal/core": "^8.6"

@@ -1,0 +1,19 @@
+name: Accounting core
+description: Provides wallets, currencies, and transactions
+package: Community Accounting
+configure: mcapi.admin
+# core: 8.x
+type: module
+dependencies:
+  - drupal:action
+  - drupal:system (>=8.4.0)
+
+#this is needed to retrieve translation
+# version: 4.0-beta16
+# project: mutual_credit
+
+# Information added by Drupal.org packaging script on 2017-11-11
+version: '8.x-4.0-beta15'
+core: '8.x'
+project: 'mutual_credit'
+datestamp: 1510434803
